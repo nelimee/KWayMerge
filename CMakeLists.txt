@@ -20,12 +20,13 @@ file(GLOB_RECURSE
         ${CMAKE_SOURCE_DIR}/merge.h
         ${CMAKE_SOURCE_DIR}/include/*.h)
 
+
 #######################################
 # General settings
 #######################################
-
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/include/)
+
 
 #######################################
 # OpenMP support
@@ -52,20 +53,20 @@ add_executable(KWayMergeExample ${EXAMPLE_SOURCE_FILES} ${HEADER_ONLY_LIBRARY_HE
 #######################################
 # Declare tests
 #######################################
-set(SEQUENTIAL_TEST_MAIN_FILE
-    tests/sequential.cpp)
+set(VALIDITY_TEST_MAIN_FILE
+    tests/validity.cpp)
 file(GLOB_RECURSE
-     SEQUENTIAL_TEST_FILES
-     "${CMAKE_SOURCE_DIR}/tests/sequential/*.cpp")
-add_executable(KWayMergeSequentialTest
-               ${SEQUENTIAL_TEST_MAIN_FILE}
-               ${SEQUENTIAL_TEST_FILES}
+     VALIDITY_TEST_FILES
+     "${CMAKE_SOURCE_DIR}/tests/validity/*.cpp")
+add_executable(KWayMergeSequentialValidityTest
+               ${VALIDITY_TEST_MAIN_FILE}
+               ${VALIDITY_TEST_FILES}
                ${HEADER_ONLY_LIBRARY_HEADER_FILES})
 
 # The parallel test is just the sequential one compiled with OpenMP support.
-add_executable(KWayMergeParallelTest
-               ${SEQUENTIAL_TEST_MAIN_FILE}
-               ${SEQUENTIAL_TEST_FILES}
+add_executable(KWayMergeParallelValidityTest
+               ${VALIDITY_TEST_MAIN_FILE}
+               ${VALIDITY_TEST_FILES}
                ${HEADER_ONLY_LIBRARY_HEADER_FILES})
-target_compile_options(KWayMergeParallelTest PUBLIC ${OpenMP_CXX_FLAGS})
-target_link_libraries(KWayMergeParallelTest ${OpenMP_CXX_LIBRARIES})
+target_compile_options(KWayMergeParallelValidityTest PUBLIC ${OpenMP_CXX_FLAGS})
+target_link_libraries(KWayMergeParallelValidityTest ${OpenMP_CXX_LIBRARIES})
