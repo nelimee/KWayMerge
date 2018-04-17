@@ -12,16 +12,20 @@ file(GLOB_RECURSE
         "${CMAKE_SOURCE_DIR}/tests/*.hpp"
         "${CMAKE_SOURCE_DIR}/tests/*.h"
         "${CMAKE_SOURCE_DIR}/include/merge.h"
+        "${CMAKE_SOURCE_DIR}/include/*.hpp"
+        "${CMAKE_SOURCE_DIR}/include/*.cpp"
         )
 file(GLOB_RECURSE
         HEADER_ONLY_LIBRARY_HEADER_FILES
+        ${CMAKE_SOURCE_DIR}/merge.h
         ${CMAKE_SOURCE_DIR}/include/*.h)
 
 #######################################
 # General settings
 #######################################
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/include/)
 
 #######################################
 # OpenMP support

@@ -1,13 +1,11 @@
 
 #include <chrono>
 #include <random>
-#include <vector>
 #include <iostream>
 #include <algorithm>
-#include <cassert>
 #include <forward_list>
 
-#include "include/merge.h"
+#include "merge.h"
 #include "tests/include/helpers.hpp"
 
 int main() {
