@@ -10,6 +10,9 @@
 #include <list>
 #include <cmath>
 
+#include "detail/get_container_size.h"
+#include "detail/first_round_merge.h"
+
 #ifdef _OPENMP
 #include "omp.h"
 #endif
@@ -107,18 +110,9 @@ Container_t<InternalContainer, T> merge_arrays(Container_t<ExternalContainer, Co
 	// 3. Declare some useful constants for the following steps.
 	// Complexity: O(1) if ExternalContainer supports an O(1) size method.
 	//             O(k) if ExternalContainer is std::forward_list.
-	std::size_t const number_of_lists_to_merge{ [&arrays]() {
-		if constexpr(std::is_same<ExternalContainer_t, std::forward_list<InternalContainer_t>>::value) {
-			// The external container is std::forward_list. This type does not have a size() method,
-			// so we need to call std::distance.
-			return static_cast<std::size_t>(std::distance(arrays.begin(), arrays.end()));
-		} else {
-			return arrays.size();
-		}
-	}() }; // Initialisation with a directly-called lambda function.
+	std::size_t const number_of_lists_to_merge{detail::get_container_size(arrays)};
 	std::size_t const block_number_after_first_round{number_of_lists_to_merge/2 + number_of_lists_to_merge%2};
 	std::size_t const block_separator_number_after_first_round{block_number_after_first_round - 1};
-
 
 	// 4. Handle simple cases:
 	if(number_of_lists_to_merge == 0) {
@@ -135,57 +129,8 @@ Container_t<InternalContainer, T> merge_arrays(Container_t<ExternalContainer, Co
 
 	// 5. First step of the merge: concurrently merge adjacent containers into the memory space
 	// allocated for the result.
-	// We also keep track of the iterators that separate 2 sorted lists in separators.
-	// separators stores iterators pointing to the beginning of a sorted sequence.
-	// Complexity:
-	//   - Work: O(M*Comp*k + k + M)
-	//   - Depth: O(M*Comp*k/p + k + M)
+	auto separators = detail::first_round_merge(arrays, result, comp);
 
-	// 5.1. Create a vector of pointers on the beginning of sorted-blocks.
-	// Complexity: O(k)
-	// The last pointer is the end of the vector.
-	std::forward_list<typename decltype(result)::iterator> separators(2 + block_separator_number_after_first_round, result.begin());
-	// Iterator on the last valid element of separators.
-	auto last_inserted = separators.begin();
-
-	// 5.2. Merge concurrently adjacent containers
-	// Complexity:
-	//   - Work: O(M*Comp*k) (at most (2*M-1) comparisons per merge, k/2 merges)
-	//   - Depth: O(M*Comp*k/p)
-	{   // Open a block here because we have other variables called left/right
-		// after this block and we don't want to mix them.
-		auto left = arrays.begin();
-		auto right = std::next(left);
-#pragma omp parallel
-		{
-#pragma omp single nowait
-			{
-				std::size_t next_free_position{0};
-				while(left != arrays.end() && right != arrays.end()) {
-					right = std::next(left);
-					++last_inserted;
-#pragma omp task firstprivate(last_inserted, left, right, next_free_position)
-					{
-						*last_inserted = std::merge(left->begin() , left->end(),         /*input  1*/
-						                            right->begin(), right->end(),        /*input  2*/
-						                            result.begin() + next_free_position, /*output 1*/
-						                            comp);                               /*comparator*/
-					}
-					next_free_position += left->size() + right->size();
-					left = std::next(right);
-				};
-			}
-		}
-		// 5.3. Take care of the last array if there is a odd number of arrays.
-		// Complexity: O(M)
-		if(number_of_lists_to_merge%2) {
-			auto const previously_inserted = last_inserted;
-			++last_inserted;
-			*last_inserted = std::copy(left->begin(),
-			                           left->end(),
-			                           *previously_inserted);
-		}
-	}
 	// 6. Now result contains all the values, we just need to merge all the lists not merged in the previous step.
 	// In the separators list, we also have the begin() and end() iterators, that is why our stop condition is
 	// that the separators list should contain only 2 elements: the begin() and the end()
