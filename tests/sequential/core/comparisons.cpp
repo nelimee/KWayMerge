@@ -1,7 +1,5 @@
 #include "catch.hpp"
 
-#include <vector>
-#include <algorithm>
 #include "merge.h"
 #include "define.hpp"
 
@@ -14,7 +12,8 @@ TEST_CASE("comparison with std::merge", "[core][comparison][random]") {
 	                                                              100,         /*internal size min*/
 	                                                              200,         /*internal size max*/
 	                                                              0.0,         /*double min*/
-	                                                              1.0)         /*double max*/
+	                                                              1.0,         /*double max*/
+	                                                              emplace_back /*emplace_back method name*/)
 
 	std::vector<double> result_std_merge(array[0].size() + array[1].size());
 	std::merge(array[0].begin(), array[0].end(), array[1].begin(), array[1].end(), result_std_merge.begin());
@@ -36,7 +35,8 @@ TEST_CASE("comparison with std::sort", "[core][comparison][random]") {
 	                                                              100,         /*internal size min*/
 	                                                              200,         /*internal size max*/
 	                                                              0.0,         /*double min*/
-	                                                              1.0)         /*double max*/
+	                                                              1.0,         /*double max*/
+	                                                              emplace_back /*emplace_back method name*/)
 
 	std::vector<double> result_std_sort(array[0].size() + array[1].size());
 	auto first_free = std::copy(array[0].begin(), array[0].end(), result_std_sort.begin());

@@ -2,8 +2,6 @@
 
 #include "define.hpp"
 
-#include <vector>
-#include <algorithm>
 #include "merge.h"
 
 
@@ -16,7 +14,8 @@ TEST_CASE("merging 2 small arrays", "[core][small][random]") {
 	                                                              100,         /*internal size min*/
 	                                                              200,         /*internal size max*/
 	                                                              0.0,         /*double min*/
-	                                                              1.0)         /*double max*/
+	                                                              1.0,         /*double max*/
+	                                                              emplace_back /*emplace_back method name*/)
 
 	std::size_t const expected_size{array[0].size() + array[1].size()};
 	std::vector<double> result_kway_merge = merge_arrays(array);
