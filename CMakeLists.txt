@@ -7,14 +7,15 @@ project(KWayMerge)
 #######################################
 set(CMAKE_CXX_STANDARD 17)
 file(GLOB_RECURSE
-     ALL_SOURCE_FILES
-     "${CMAKE_SOURCE_DIR}/tests/*.cpp"
-     "${CMAKE_SOURCE_DIR}/tests/*.hpp"
-     "${CMAKE_SOURCE_DIR}/tests/*.h"
-     "${CMAKE_SOURCE_DIR}/include/merge.h"
-     )
-set(HEADER_ONLY_LIBRARY_HEADER_FILES
-    ${CMAKE_SOURCE_DIR}/include/merge.h)
+        ALL_SOURCE_FILES
+        "${CMAKE_SOURCE_DIR}/tests/*.cpp"
+        "${CMAKE_SOURCE_DIR}/tests/*.hpp"
+        "${CMAKE_SOURCE_DIR}/tests/*.h"
+        "${CMAKE_SOURCE_DIR}/include/merge.h"
+        )
+file(GLOB_RECURSE
+        HEADER_ONLY_LIBRARY_HEADER_FILES
+        ${CMAKE_SOURCE_DIR}/include/*.h)
 
 #######################################
 # General settings
