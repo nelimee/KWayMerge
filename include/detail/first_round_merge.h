@@ -8,9 +8,7 @@
 #include "get_container_size.h"
 
 #ifdef _OPENMP
-
 #include "omp.h"
-
 #endif
 
 namespace detail {
