@@ -4,8 +4,6 @@
 
 #include <list>
 #include <deque>
-#include <set>
-#include <unordered_set>
 
 #include "merge.h"
 
@@ -32,9 +30,7 @@ REQUIRE(std::is_sorted(result_kway_merge.begin(), result_kway_merge.end()));\
 
 
 KWAYMERGE_TEST_EXTERNAL_DATA_STRUCTURE(std::list, "std::list", emplace_back)
-
 KWAYMERGE_TEST_EXTERNAL_DATA_STRUCTURE(std::vector, "std::vector", emplace_back)
-
 KWAYMERGE_TEST_EXTERNAL_DATA_STRUCTURE(std::deque, "std::deque", emplace_back)
 
 
