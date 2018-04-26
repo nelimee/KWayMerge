@@ -7,25 +7,25 @@ project(KWayMerge)
 #######################################
 set(CMAKE_CXX_STANDARD 17)
 file(GLOB_RECURSE
-        ALL_SOURCE_FILES
-        "${CMAKE_SOURCE_DIR}/tests/*.cpp"
-        "${CMAKE_SOURCE_DIR}/tests/*.hpp"
-        "${CMAKE_SOURCE_DIR}/tests/*.h"
-        "${CMAKE_SOURCE_DIR}/include/merge.h"
-        "${CMAKE_SOURCE_DIR}/include/*.hpp"
-        "${CMAKE_SOURCE_DIR}/include/*.cpp"
-        )
+     ALL_SOURCE_FILES
+     "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp"
+     "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.hpp"
+     "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.h"
+     "${CMAKE_CURRENT_SOURCE_DIR}/include/merge.h"
+     "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
+     "${CMAKE_CURRENT_SOURCE_DIR}/include/*.cpp"
+     )
 file(GLOB_RECURSE
-        HEADER_ONLY_LIBRARY_HEADER_FILES
-        ${CMAKE_SOURCE_DIR}/merge.h
-        ${CMAKE_SOURCE_DIR}/include/*.h)
+     HEADER_ONLY_LIBRARY_HEADER_FILES
+     ${CMAKE_CURRENT_SOURCE_DIR}/merge.h
+     ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 
 
 #######################################
 # General settings
 #######################################
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/include/)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
 
 #######################################
@@ -54,10 +54,11 @@ add_executable(KWayMergeExample ${EXAMPLE_SOURCE_FILES} ${HEADER_ONLY_LIBRARY_HE
 # Declare tests
 #######################################
 set(VALIDITY_TEST_MAIN_FILE
-    tests/validity.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/validity.cpp)
 file(GLOB_RECURSE
      VALIDITY_TEST_FILES
-     "${CMAKE_SOURCE_DIR}/tests/validity/*.cpp")
+     "${CMAKE_CURRENT_SOURCE_DIR}/tests/validity/*.cpp")
+
 add_executable(KWayMergeSequentialValidityTest
                ${VALIDITY_TEST_MAIN_FILE}
                ${VALIDITY_TEST_FILES}
