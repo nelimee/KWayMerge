@@ -37,10 +37,10 @@ find_package(OpenMP)
 #######################################
 # Unit-testing with Catch2
 #######################################
-set(CATCH_SINGLE_INCLUDE_DIRECTORY ${CMAKE_SOURCE_DIR}/tests/include)
-set(CATCH_SINGLE_INCLUDE_FILE ${CATCH_SINGLE_INCLUDE_DIRECTORY}/catch.hpp)
-include_directories(${CATCH_SINGLE_INCLUDE_DIRECTORY})
-
+set(CATCH_SINGLE_INCLUDE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
+# Prepare "Catch" library for other executables
+add_library(Catch INTERFACE)
+target_include_directories(Catch INTERFACE ${CATCH_SINGLE_INCLUDE_DIRECTORY})
 
 #######################################
 # Declare example executable
@@ -63,6 +63,8 @@ add_executable(KWayMergeSequentialValidityTest
                ${VALIDITY_TEST_MAIN_FILE}
                ${VALIDITY_TEST_FILES}
                ${HEADER_ONLY_LIBRARY_HEADER_FILES})
+target_link_libraries(KWayMergeSequentialValidityTest Catch)
+
 
 # The parallel test is just the sequential one compiled with OpenMP support.
 add_executable(KWayMergeParallelValidityTest
@@ -70,4 +72,6 @@ add_executable(KWayMergeParallelValidityTest
                ${VALIDITY_TEST_FILES}
                ${HEADER_ONLY_LIBRARY_HEADER_FILES})
 target_compile_options(KWayMergeParallelValidityTest PUBLIC ${OpenMP_CXX_FLAGS})
-target_link_libraries(KWayMergeParallelValidityTest ${OpenMP_CXX_LIBRARIES})
+target_link_libraries(KWayMergeParallelValidityTest
+                      ${OpenMP_CXX_LIBRARIES}
+                      Catch)
