@@ -1,7 +1,5 @@
 #include "catch.hpp"
-
 #include "define.hpp"
-
 #include "merge.h"
 
 
