@@ -32,14 +32,21 @@ template<typename Container>
 using Iterator_t = typename Container::iterator;
 
 /**
+ * Perform the first-round of k-way merge.
  *
- * @tparam ContainerOfContainers
- * @tparam OutputContainer
- * @tparam Comp
- * @param container
- * @param output
- * @param comp
- * @return
+ * The first round will merge the containers contained in @a container
+ * in the container @a output. Containers 2*i and 2*i+1 are merged.
+ *
+ * @tparam ContainerOfContainers type of @a container.
+ * @tparam OutputContainer type of the output container.
+ * @tparam Comp comparator used to sort each container of @a container.
+ * @param container a sequence of containers to merge.
+ * @param output a pre-allocated output container that will be filled
+ * with the merged arrays.
+ * @param comp comparator used to sort each container of @a container.
+ * @return a list of iterators over @a output elements. Each iterator (except
+ * the last one which is @a output.end()) points to the beginning of a sorted
+ * sequence.
  */
 template<
 		typename ContainerOfContainers,
@@ -72,40 +79,37 @@ std::forward_list<Iterator_t<OutputContainer>> first_round_merge(ContainerOfCont
 	// Complexity:
 	//   - Work: O(M*Comp*k) (at most (2*M-1) comparisons per merge, k/2 merges)
 	//   - Depth: O(M*Comp*k/p)
-	{   // Open a block here because we have other variables called left/right
-		// after this block and we don't want to mix them.
-		auto left = container.begin();
-		auto right = std::next(left);
+	auto left = container.begin();
+	auto right = std::next(left);
 #pragma omp parallel
-		{
+	{
 #pragma omp single nowait
-			{
-				std::size_t next_free_position{0};
-				// TODO: Change this to a for-loop?
-				while (left != container.end() && right != container.end()) {
-					right = std::next(left);
-					++last_inserted;
+		{
+			std::size_t next_free_position{0};
+			// TODO: Change this to a for-loop?
+			while (left != container.end() && right != container.end()) {
+				right = std::next(left);
+				++last_inserted;
 #pragma omp task firstprivate(last_inserted, left, right, next_free_position)
-					{
-						*last_inserted = std::merge(left->begin(), left->end(),         /*input  1*/
-						                            right->begin(), right->end(),        /*input  2*/
-						                            output.begin() + next_free_position, /*output 1*/
-						                            comp);                               /*comparator*/
-					}
-					next_free_position += left->size() + right->size();
-					left = std::next(right);
-				};
-			}
+				{
+					*last_inserted = std::merge(left->begin(), left->end(),          /*input  1*/
+					                            right->begin(), right->end(),        /*input  2*/
+					                            output.begin() + next_free_position, /*output 1*/
+					                            comp);                               /*comparator*/
+				}
+				next_free_position += left->size() + right->size();
+				left = std::next(right);
+			};
 		}
-		// 5.3. Take care of the last array if there is a odd number of arrays.
-		// Complexity: O(M)
-		if (number_of_lists_to_merge % 2) {
-			auto const previously_inserted = last_inserted;
-			++last_inserted;
-			*last_inserted = std::copy(left->begin(),
-			                           left->end(),
-			                           *previously_inserted);
-		}
+	}
+	// 5.3. Take care of the last array if there is a odd number of arrays.
+	// Complexity: O(M)
+	if (number_of_lists_to_merge % 2) {
+		auto const previously_inserted = last_inserted;
+		++last_inserted;
+		*last_inserted = std::copy(left->begin(),
+		                           left->end(),
+		                           *previously_inserted);
 	}
 
 	return separators;
