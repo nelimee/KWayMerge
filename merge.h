@@ -10,9 +10,9 @@
 #include <list>
 #include <cmath>
 
-#include "detail/get_container_size.h"
-#include "detail/first_round_merge.h"
-#include "detail/iterative_merge.h"
+#include "include/detail/get_container_size.h"
+#include "include/detail/first_round_merge.h"
+#include "include/detail/iterative_merge.h"
 
 #ifdef _OPENMP
 #include "omp.h"
