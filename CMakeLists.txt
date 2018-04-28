@@ -17,7 +17,7 @@ file(GLOB_RECURSE
      )
 file(GLOB_RECURSE
      KWAY_MERGE_HEADER_ONLY_LIBRARY_HEADER_FILES
-     ${CMAKE_CURRENT_SOURCE_DIR}/merge.h
+     include/merge.h
      ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 
 
