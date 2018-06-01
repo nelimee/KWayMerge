@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <functional>
 
-#include "get_container_size.h"
+#include "include/detail/get_container_size.h"
 
 #ifdef _OPENMP
 #include "omp.h"

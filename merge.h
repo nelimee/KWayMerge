@@ -11,8 +11,8 @@
 #include <cmath>
 
 #include "include/detail/get_container_size.h"
-#include "include/detail/first_round_merge.h"
-#include "include/detail/iterative_merge.h"
+#include "include/detail/OpenMP/first_round_merge.h"
+#include "include/detail/OpenMP/iterative_merge.h"
 
 #ifdef _OPENMP
 #include "omp.h"
