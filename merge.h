@@ -115,19 +115,17 @@ merge_arrays(ContainerOfContainers const &arrays,
 	// Complexity: O(1) if ExternalContainer supports an O(1) size method.
 	//             O(k) if ExternalContainer is std::forward_list.
 	std::size_t const number_of_lists_to_merge{detail::get_container_size(arrays)};
-	std::size_t const block_number_after_first_round{number_of_lists_to_merge/2 + number_of_lists_to_merge%2};
+	std::size_t const block_number_after_first_round{number_of_lists_to_merge / 2 + number_of_lists_to_merge % 2};
 	std::size_t const block_separator_number_after_first_round{block_number_after_first_round - 1};
 
 	// 4. Handle simple cases:
 	if (number_of_lists_to_merge == 0) {
 		return result;
-	}
-	else if (number_of_lists_to_merge == 1) {
+	} else if (number_of_lists_to_merge == 1) {
 		auto const front = *(arrays.begin());
 		std::copy(front.begin(), front.end(), result.begin());
 		return result;
-	}
-	else if (number_of_lists_to_merge == 2) {
+	} else if (number_of_lists_to_merge == 2) {
 		auto const first = arrays.begin();
 		auto const second = std::next(first);
 		std::merge(first->begin(), first->end(), second->begin(), second->end(), result.begin());
