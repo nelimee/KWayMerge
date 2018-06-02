@@ -33,10 +33,10 @@ namespace detail {
 template <typename Container> using Iterator_t = typename Container::iterator;
 
 template <
-        typename OutputContainer,
-        typename Comp = std::less<typename OutputContainer::value_type>
+        typename InputIterator,
+        typename Comp = std::less<typename std::iterator_traits<InputIterator>::value_type>
 >
-void iterative_merge(OutputContainer & output, std::forward_list<typename OutputContainer::iterator> & separators,
+void iterative_merge(std::forward_list<InputIterator> & separators,
                      std::size_t separators_size,
                      Comp comp = Comp()) {
     // 6. Now result contains all the values, we just need to merge all the lists not merged in the previous step.

@@ -135,8 +135,11 @@ typename ContainerOfContainers::value_type merge_arrays(ContainerOfContainers co
     // allocated for the result.
     auto separators = detail::first_round_merge(arrays, result, comp);
 
-    // 6. Now result contains all the values, we just need to merge all the lists not merged in the previous step.
-    detail::iterative_merge(result, separators, block_separator_number_after_first_round, comp);
+    // 6. Now result contains all the values, we just need to merge all the
+    // lists not merged in the previous step.
+    // Complexity: - Sequential: O(k*M*log2(k))
+    //             - Parallel:   O(k*M*log2(k)/p)
+    detail::iterative_merge(separators, block_separator_number_after_first_round, comp);
 
     // Return the result
     return result;
