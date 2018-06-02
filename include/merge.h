@@ -9,6 +9,7 @@
 #include <forward_list>
 #include <list>
 #include <cmath>
+#include <functional>
 
 #include "include/detail/get_container_size.h"
 #include "include/detail/first_round_merge.h"
@@ -19,7 +20,7 @@
 #endif
 
 template <
-        template <class,class> typename Container,
+        template <class, class> typename Container,
         typename T
 > using Container_t = Container<T, std::allocator<T>>;
 
@@ -37,8 +38,19 @@ template <
  *
  * The function is parallelised using OpenMP when the library is available.
  *
- * Overall complexity is:
- *
+ * Complexity:
+ *   - Work:  O(k + M + N*TDefInit + k*M*[Comp + log2(k)])
+ *   - Depth: O(k + M + N*TDefInit + k*M*[Comp + log2(k)]/p)
+ * Where:
+ *   1. "k": the number of lists to merge. `k == arrays.size()`.
+ *   2. "N": the total number of elements. N is the sum of the size of the
+ *           "k" lists in arrays.
+ *   3. "M": the size of the longest list in arrays.
+ *   4. "Comp": the number of operations needed to compare to objects of
+ *              type T with the provided comparator.
+ *   4. "TDefInit": the number of operations needed to default-initialise
+ *                  an object of type T.
+ *   5. "p": the number of processor(s) used.
  *
  * @tparam ContainerOfContainers structure containing the sorted container to
  * merge.
@@ -54,22 +66,6 @@ template <
         typename Comp = std::less<typename ContainerOfContainers::value_type::value_type>
 >
 typename ContainerOfContainers::value_type merge_arrays(ContainerOfContainers const & arrays, Comp comp = Comp()) {
-
-    /* Note about complexity:
-     * Complexity of each major point ("0.", "1.", ...) is analysed in details.
-     * The names used are:
-     *   1. "k": the number of lists to merge. `k == arrays.size()`.
-     *   2. "N": the total number of elements. N is the sum of the size of the
-     *           "k" lists in arrays.
-     *   3. "M": the size of the longest list in arrays.
-     *   4. "Comp": the number of operations needed to compare to objects of
-     *              type T with the provided comparator.
-     *   4. "TDefInit": the number of operations needed to default-initialise
-     *                  an object of type T.
-     *   5. "p": the number of processor(s) used by OpenMP.
-     * For parallelised parts "complexity" means the "sequential complexity",
-     * also called "work". The "depth" is also given.
-     */
 
     // 1. Useful types definition
     // Complexity: O(0) (compile-time).
@@ -131,8 +127,10 @@ typename ContainerOfContainers::value_type merge_arrays(ContainerOfContainers co
         return result;
     }
 
-    // 5. First step of the merge: concurrently merge adjacent containers into the memory space
-    // allocated for the result.
+    // 5. First step of the merge: concurrently merge adjacent containers into
+    // the memory space allocated for the result.
+    // Complexity: - Sequential: O(M*Comp*k   + k + M)
+    //             - Parallel:   O(M*Comp*k/p + k + M)
     auto separators = detail::first_round_merge(arrays, result, comp);
 
     // 6. Now result contains all the values, we just need to merge all the

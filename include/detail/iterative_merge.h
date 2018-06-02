@@ -1,5 +1,5 @@
-#ifndef KWAYMERGE_ITERATIVE_MERGE_H
-#define KWAYMERGE_ITERATIVE_MERGE_H
+#ifndef INCLUDE_DETAIL_ITERATIVE_MERGE_H_
+#define INCLUDE_DETAIL_ITERATIVE_MERGE_H_
 
 #include <cmath>
 #include <iterator>
@@ -8,30 +8,35 @@
 #include <functional>
 
 #ifdef _OPENMP
-
 #include "omp.h"
-
 #endif
 
 namespace detail {
 
-/* Note about complexity:
- * The names used are:
- *   1. "k": the number of lists to merge. `k == arrays.size()`.
- *   2. "N": the total number of elements. N is the sum of the size of the
- *           "k" lists in arrays.
- *   3. "M": the size of the longest list in arrays.
- *   4. "Comp": the number of operations needed to compare to objects of
- *              type T with the provided comparator.
- *   4. "TDefInit": the number of operations needed to default-initialise
- *                  an object of type T.
- *   5. "p": the number of processor(s) used by OpenMP.
- * For parallelised parts "complexity" means the "sequential complexity",
- * also called "work". The "depth" is also given.
- */
-
 template <typename Container> using Iterator_t = typename Container::iterator;
 
+/**
+ * @brief Iteratively merge contiguous sorted sequences represented by @a separators.
+ *
+ * The method uses std::merge_inplace to merge the separators "in place".
+ * The merging is done by approximately log(separators.size()) rounds where
+ * each round "remove" the separators in the odd positions (indexing starting
+ * from 0) by the appropriate merging.
+ *
+ * Complexity:
+ *   - Work:  O(k*M*log2(k))
+ *   - Depth: O(k*M*log2(k)/p)
+ * Where:
+ *   1. "k": the number of lists to merge. `k == arrays.size()`.
+ *   2. "M": the size of the longest list in arrays.
+ *   3. "p": the number of processor(s) used.
+ *
+ * @tparam InputIterator type of the iterator used as separator.
+ * @tparam Comp type of the comparator used to merge.
+ * @param separators list of iterators over the contiguous sequence to merge.
+ * @param separators_size size of @a separators.
+ * @param comp instance of Comp used to merge.
+ */
 template <
         typename InputIterator,
         typename Comp = std::less<typename std::iterator_traits<InputIterator>::value_type>
@@ -39,16 +44,13 @@ template <
 void iterative_merge(std::forward_list<InputIterator> & separators,
                      std::size_t separators_size,
                      Comp comp = Comp()) {
-    // 6. Now result contains all the values, we just need to merge all the lists not merged in the previous step.
-    // In the separators list, we also have the begin() and end() iterators, that is why our stop condition is
-    // that the separators list should contain only 2 elements: the begin() and the end()
-    // Complexity:
-    //   - Work: O(k*M*log2(k))
-    //   - Depth: O(k*M*log2(k)/p)
+    // Directly start the parallel region to merge concurrently.
 #pragma omp parallel
     {
 #pragma omp single nowait
         {
+            // Pre-compute the number of merging pass (or "round") we will need
+            // to do in order to have a fully merged container.
             std::size_t const merging_pass_number{static_cast<std::size_t>(std::ceil(std::log2(separators_size)))};
             // O(log2(k)) iterations
             for (std::size_t i{0}; i < merging_pass_number; ++i) {
@@ -83,6 +85,6 @@ void iterative_merge(std::forward_list<InputIterator> & separators,
     }
 }
 
+}  // namespace detail
 
-} //detail
-#endif //KWAYMERGE_ITERATIVE_MERGE_H
+#endif  // INCLUDE_DETAIL_ITERATIVE_MERGE_H_

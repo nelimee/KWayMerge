@@ -5,28 +5,13 @@
 #include <algorithm>
 #include <functional>
 
-#include "get_container_size.h"
+#include "include/detail/get_container_size.h"
 
 #ifdef _OPENMP
 #include "omp.h"
 #endif
 
 namespace detail {
-
-/* Note about complexity:
- * The names used are:
- *   1. "k": the number of lists to merge. `k == arrays.size()`.
- *   2. "N": the total number of elements. N is the sum of the size of the
- *           "k" lists in arrays.
- *   3. "M": the size of the longest list in arrays.
- *   4. "Comp": the number of operations needed to compare to objects of
- *              type T with the provided comparator.
- *   4. "TDefInit": the number of operations needed to default-initialise
- *                  an object of type T.
- *   5. "p": the number of processor(s) used by OpenMP.
- * For parallelised parts "complexity" means the "sequential complexity",
- * also called "work". The "depth" is also given.
- */
 
 template <typename Container> using Iterator_t = typename Container::iterator;
 
@@ -39,6 +24,12 @@ template <typename Container> using Iterator_t = typename Container::iterator;
  * Complexity:
  *   - Work:  O(M*Comp*k   + k + M)
  *   - Depth: O(M*Comp*k/p + k + M)
+ * Where:
+ *   1. "k": the number of lists to merge. `k == arrays.size()`.
+ *   2. "M": the size of the longest list in arrays.
+ *   3. "Comp": the number of operations needed to compare to objects of
+ *              type T with the provided comparator.
+ *   4. "p": the number of processor(s) used.
  *
  * @tparam ContainerOfContainers type of @a container.
  * @tparam OutputContainer type of the output container.
@@ -59,13 +50,16 @@ template <
 std::forward_list<Iterator_t<OutputContainer>>
 first_round_merge(ContainerOfContainers const & container, OutputContainer & output, Comp comp = Comp()) {
 
+    // 0. Useful constants definition.
     std::size_t const number_of_lists_to_merge{get_container_size(container)};
     std::size_t const block_number_after_first_round{number_of_lists_to_merge / 2 + number_of_lists_to_merge % 2};
     std::size_t const block_separator_number_after_first_round{block_number_after_first_round - 1};
 
-    // 1. Create a vector of pointers on the beginning of sorted-blocks.
+    // 1. Create a list of pointers on the beginning of sorted-blocks.
+    // This list is then returned by the function to keep track of the non-sorted
+    // blocks that will need additional merges.
+    // The last pointer contained in the list is the end of the vector.
     // Complexity: O(k)
-    // The last pointer is the end of the vector.
     std::forward_list<Iterator_t<OutputContainer>> separators(2 + block_separator_number_after_first_round,
                                                               output.begin());
     // Iterator on the last valid element of separators.
@@ -73,31 +67,47 @@ first_round_merge(ContainerOfContainers const & container, OutputContainer & out
 
     // 2. Merge concurrently adjacent containers
     // Complexity:
-    //   - Work: O(M*Comp*k) (at most (2*M-1) comparisons per merge, k/2 merges)
+    //   - Work:  O(M*Comp*k) (at most (2*M-1) comparisons per merge, k/2 merges)
     //   - Depth: O(M*Comp*k/p)
     auto left = container.begin();
-    auto right = std::next(left);
+    decltype(left) right;
 #pragma omp parallel
     {
 #pragma omp single nowait
         {
+            // We need to keep track of the beginning of the free section
+            // in order to be able to keep the data contiguous.
             std::size_t next_free_position{0};
-            // TODO: Change this to a for-loop?
+            // While there are at least 2 non-processed regions that should be
+            // merged.
             while (left != container.end() && right != container.end()) {
+                // First update the second iterator.
                 right = std::next(left);
+                // Increase the iterator over the separators. We want this
+                // iterator to points to the end of the memory section we will
+                // fill during the upcoming merge operation.
                 ++last_inserted;
+                // Then we declare a task that will be executed by one of the
+                // workers. Tasks are independent and can be computed in any
+                // order because each task copy the data it needs to complete
+                // and the memory sections used by each task do not overlap.
 #pragma omp task firstprivate(last_inserted, left, right, next_free_position)
                 {
+                    // Merge a memory portion and update our separator structure
+                    // with an iterator pointing to the end of the memory section
+                    // used.
                     *last_inserted = std::merge(left->begin(), left->end(),          /*input  1*/
                                                 right->begin(), right->end(),        /*input  2*/
                                                 output.begin() + next_free_position, /*output 1*/
                                                 comp);                               /*comparator*/
                 }
+                // Update the next free position in the output vector.
                 next_free_position += left->size() + right->size();
                 left = std::next(right);
             }
         }
     }
+
     // 5.3. Take care of the last array if there is a odd number of arrays.
     // Complexity: O(M)
     if (number_of_lists_to_merge % 2) {
