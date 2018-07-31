@@ -20,7 +20,6 @@ file(GLOB_RECURSE
         ${CMAKE_CURRENT_SOURCE_DIR}/merge.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 
-
 #######################################
 # General settings
 #######################################
